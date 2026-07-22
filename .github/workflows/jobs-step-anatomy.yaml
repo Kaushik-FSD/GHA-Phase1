@@ -1,0 +1,56 @@
+name: Job & Step Anatomy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+
+  # 'build' is the job ID — this is how other jobs reference this one
+  build:
+    name: Build & Test              # Optional: display name in UI (can differ from ID)
+    runs-on: ubuntu-latest          # Which runner — deep dive on this in Phase 2
+
+    # By default, all jobs run IN PARALLEL.
+    # 'needs' forces sequential ordering.
+    # needs: [lint]   ← uncomment this if a 'lint' job existed above
+
+    steps:
+      # Step 1 — uses: runs a pre-built Action from GitHub Marketplace
+      - name: Checkout code
+        uses: actions/checkout@v4   # format: {owner}/{repo}@{version}
+
+      # Step 2 — actions are parameterised via 'with:'
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'   # Adoptium OpenJDK
+
+      # Step 3 — run: executes shell commands directly
+      - name: Build
+        run: mvn clean package -DskipTests
+
+      # Step 4 — multi-line shell with |
+      # Each line runs sequentially; if any line exits non-zero, step fails
+      - name: Run Tests
+        run: |
+          echo "Running tests..."
+          mvn test
+          echo "Tests complete."
+
+      # Step 5 — step-level env var (scoped to this step only)
+      - name: Print build info
+        env:
+          BUILD_VERSION: "1.0.${{ github.run_number }}"
+        run: echo "Built version $BUILD_VERSION"
+
+      # Step 6 — conditional step using 'if:'
+      # This step ONLY runs when branch is main
+      - name: Upload JAR (main only)
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/*.jar
+          retention-days: 7

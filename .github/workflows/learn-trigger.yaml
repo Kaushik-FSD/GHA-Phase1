@@ -39,8 +39,8 @@ on:
         default: false
 
   # Same cron syntax as Jenkins "Build Periodically"
-  schedule:
-    - cron: '0 9 * * 1-5'    # 9:00 AM UTC, Mon–Fri
+  # schedule:
+  #   - cron: '0 9 * * 1-5'    # 9:00 AM UTC, Mon–Fri
 
 jobs:
   show-trigger:
