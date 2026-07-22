@@ -1,0 +1,53 @@
+name: Learn Triggers
+
+# 'on:' is the entire trigger block.
+# Equivalent to Jenkins "Build Triggers" section.
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'        # glob: matches release/1.0, release/v2, etc.
+    paths:
+      - 'src/**'            # only run if something inside src/ changed
+      - '!src/**/*.md'      # EXCEPT if only .md files changed (! = negation)
+
+  pull_request:
+    branches:
+      - main                # only PRs targeting main
+    types:
+      - opened              # PR created
+      - synchronize         # new commits pushed to the PR branch
+      - reopened            # PR reopened after close
+    # If you omit 'types:', it defaults to [opened, synchronize, reopened]
+
+  # Manual trigger — shows a "Run workflow" button in the GitHub UI
+  # This is your Jenkins "Build with Parameters" equivalent
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        default: 'staging'
+        options:
+          - staging
+          - production
+      dry_run:
+        description: 'Skip actual deploy?'
+        required: false
+        type: boolean
+        default: false
+
+  # Same cron syntax as Jenkins "Build Periodically"
+  schedule:
+    - cron: '0 9 * * 1-5'    # 9:00 AM UTC, Mon–Fri
+
+jobs:
+  show-trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print what triggered this
+        run: |
+          echo "Trigger event : ${{ github.event_name }}"
+          echo "Branch        : ${{ github.ref_name }}"
+          echo "Manual input  : ${{ inputs.environment }}"
